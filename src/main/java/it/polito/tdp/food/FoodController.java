@@ -5,8 +5,11 @@
 package it.polito.tdp.food;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import it.polito.tdp.food.model.Model;
+import it.polito.tdp.food.model.PorzioneEPeso;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -40,7 +43,7 @@ public class FoodController {
     private Button btnCammino; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxPorzioni"
-    private ComboBox<?> boxPorzioni; // Value injected by FXMLLoader
+    private ComboBox<String> boxPorzioni; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
@@ -49,12 +52,73 @@ public class FoodController {
     void doCammino(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Cerco cammino peso massimo...");
+    	
+    	if(!model.esisteGrafo()) {
+    		txtResult.setText("Crea il grafo prima");
+    		return ;
+    	}
+    	
+        String p = this.boxPorzioni.getValue();
+    	
+    	if(p == null) {
+    		txtResult.setText("scegli una porzione di partenza");
+    		return;
+    	}
+    	
+    	if(txtPassi.getText().isEmpty()) {
+    		txtResult.setText("Non hai inserito un valore nella casella passi");
+    		return ;
+    	}
+    	
+    	int passi=0;
+    	
+    	try {
+    		passi = Integer.parseInt(this.txtPassi.getText());
+    		
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("Inserisci un valore numerico");
+    		return;
+    	}
+    	
+    	List<PorzioneEPeso> risultato = model.cercaCammino(p, passi);
+    	
+    	if(risultato.size() == 0) {
+    		txtResult.setText("NESSUN RISULTATO");
+    		return ;
+    	}
+    	
+    	for(PorzioneEPeso pp: risultato) {
+    		txtResult.appendText(pp.getPorzione()+"\n");
+    	}
+    	
+    	txtResult.appendText("Il peso totale vale: "+model.getPesoTotale());
     }
 
     @FXML
     void doCorrelate(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Cerco porzioni correlate...");
+    	txtResult.appendText("Cerco porzioni correlate...\n ");
+    	
+    	if(!model.esisteGrafo()) {
+    		txtResult.appendText("crea il grafo prima");
+    		return ;
+    	}
+    	
+    	String p = this.boxPorzioni.getValue();
+    	
+    	if(p == null) {
+    		txtResult.setText("scegli una porzione di partenza");
+    		return;
+    	}
+    	
+    	List<PorzioneEPeso> correlate = new ArrayList<>(model.porzioniCorrelate(p));
+    	if(correlate.size() == 0) {
+    		txtResult.setText("la porzione scelta non ha adiacenti");
+    		return ;
+    	}
+    	  for(PorzioneEPeso pe: correlate) {
+    		  txtResult.appendText(pe.toString()+"\n");
+    	  }
     	
     }
 
@@ -62,6 +126,25 @@ public class FoodController {
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Creazione grafo...");
+    	
+    	if(txtCalorie.getText().isEmpty()){
+    		txtResult.setText("inserisce un valore nella casella calories");
+    		return ;
+    	}
+    	int c = 0;
+    	
+    	try {
+    		c = Integer.parseInt(this.txtCalorie.getText());
+    		
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("inserisci un intero");
+    		return;
+    	}
+    	
+    	model.creaGrafo(c);
+    	txtResult.appendText("Grafo Creato: \n #Vertici:"+model.NumVertici()+"\n#Archi:"+model.NumArchi());
+    	
+    	boxPorzioni.getItems().addAll(model.getVerticiGrafo());
     	
     }
 
